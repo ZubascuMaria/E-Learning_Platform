@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int          @id @default(autoincrement())
+  email     String       @unique
+  password  String
+  role      String       @default("user")
+  enrollments Enrollment[]
+  courses   Course[]     @relation("ProfessorCourses")
+}
+
+model Course {
+  id              Int               @id @default(autoincrement())
+  name            String
+  domain          String
+  description     String
+  startDate       DateTime          @default(now())
+  endDate         DateTime?
+  price           Float
+  discount        Float       @default(0) 
+  availablePlaces Int
+  vacancies       Int
+  professorId     Int     
+
+  professor       User              @relation("ProfessorCourses", fields: [professorId], references: [id])
+  enrollments     Enrollment[]
+  languages       Course_Language[]
+}
+
+model Enrollment {
+  id        Int      @id @default(autoincrement())
+  studentID Int
+  courseID  Int
+  studentName  String
+
+  user      User     @relation(fields: [studentID], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseID], references: [id], onDelete: Cascade)
+
+  @@unique([studentID, courseID])
+}
+
+model Languages {
+  id      Int               @id @default(autoincrement())
+  name    String            @unique 
+  courses Course_Language[]
+}
+
+model Course_Language {
+  id          Int       @id @default(autoincrement())
+  languageID  Int
+  courseID    Int
+
+  language    Languages @relation(fields: [languageID], references: [id])
+  course      Course    @relation(fields: [courseID], references: [id], onDelete: Cascade)
+
+  @@unique([languageID, courseID])
+}
